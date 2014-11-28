@@ -12,14 +12,12 @@ reverseOrthographic = (λ, φ) ->
 d3.geo.reverseOrthographic = () ->
   d3.geo.projection(reverseOrthographic)
 
-
 reverseNellHammer = (λ, φ)  ->
   λ *= -1
-  [ λ * (1 + Math.cos(φ)) / 2, 2 * (φ - Math.tan(φ / 2)) ];
+  [λ * (1 + Math.cos(φ)) / 2, 2 * (φ - Math.tan(φ / 2))]
 
 d3.geo.reverseNellHammer = () ->
   d3.geo.projection(reverseNellHammer)
-
 
 jQuery ($) ->
   $.vent = $({})

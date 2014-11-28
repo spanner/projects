@@ -53,6 +53,19 @@ set :js_dir, 'javascripts'
 
 set :images_dir, 'images'
 
+def save_ips
+  require "json"
+  json = []
+  File.open("source/data/ips.txt", "r").each_line do |line|
+    json.push line
+  end
+  File.open("source/data/ips.json","w") do |f|
+    f.write(tempHash.to_json)
+  end
+  pp json
+end
+
+
 # Build-specific configuration
 configure :build do
   # For example, change the Compass output style for deployment
