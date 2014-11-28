@@ -111,7 +111,11 @@ jQuery ($) ->
       ocean_fill.append("stop").attr("offset", "75%").attr("stop-color", "#ffffff").attr('stop-opacity', "0")
       ocean_fill.append("stop").attr("offset", "100%").attr("stop-color", "#bdbdbd").attr('stop-opacity', "0.2")
 
-      @_background_country_elements = @_svg.selectAll(".country.background")
+      @_background_g = @_svg.append("g").attr("class","background")
+      @_reverse_g = @_svg.append("g").attr("class","back")
+      @_g = @_svg.append("g").attr("class","front")
+
+      @_background_country_elements = @_background_g.selectAll(".country.background")
         .data(country_features)
         .enter().insert("path")
         .attr("data-code", (d) -> d.id)
@@ -130,7 +134,8 @@ jQuery ($) ->
         .attr("r", @_radius)
         .style("fill", "url(#ocean_fill)")
 
-      @_reverse_country_elements = @_svg.selectAll(".country.back")
+
+      @_reverse_country_elements = @_reverse_g.selectAll(".country.back")
         .data(country_features)
         .enter().insert("path")
         .attr("data-code", (d) -> d.id)
@@ -138,7 +143,7 @@ jQuery ($) ->
         .attr("class","country back")
         .attr("filter", "url(#blur)")
 
-      @_country_elements = @_svg.selectAll(".country.front")
+      @_country_elements = @_g.selectAll(".country.front")
         .data(country_features)
         .enter().insert("path")
         .attr("data-code", (d) -> d.id)
@@ -191,9 +196,7 @@ jQuery ($) ->
       @_background_projection.rotate([@reverseLng(lng), @reverseLat(lat),@reverseRoll(roll)])
       @_background_country_elements.attr("d", @_background_path)
 
-      @_locations.attr("transform", (d) =>
-        "translate(#{@_projection([d.lng,d.lat])})"
-      )
+      @_locations.attr("d", @_path)
 
     setAngleFromSummerSolstice: () =>
       date = @getNow()
@@ -230,17 +233,13 @@ jQuery ($) ->
         new Date(@_start_date + (Date.now() - @_start_date) * @_play_speed)
 
     displayLocations: (json) =>
-      @_locations = @_svg.selectAll("circle.location")          
-        .data(json)
-          .enter().append("circle")
-          .attr("class","location")
-          .attr("r", 3)
-          .attr("transform", (d) =>
-            "translate(#{@_projection([d.lng,d.lat])})"
-          )
-          
-          
-      console.debug json
+      circles = json.map ({lat:lat,lng:lng}={}) ->
+        d3.geo.circle().origin([lng,lat]).angle(1.0)()
+      @_locations = @_g.selectAll(".location")
+        .data(circles)
+        .enter().insert("path")
+        .attr("class","location")
+        .attr("d", @_path)
 
 $ ->
   $.vent.trigger('page.ready')
