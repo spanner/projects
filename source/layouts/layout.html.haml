@@ -4,16 +4,16 @@
     %meta{:charset => "utf-8"}
     %meta{:name => "viewport", :content => "width=device-width, initial-scale=1"}
     %title
-      Widgets
+      spanner
 
     = yield_content :head
 
-    = stylesheet_link_tag "normalize", "all", "globes"
+    = stylesheet_link_tag "overlay", "globe"
 
   %body
     %header
       = yield_content :header
     %main
       = yield
-    %footer
-      = yield_content :footer
+
+    = javascript_include_tag "globe"
