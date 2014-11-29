@@ -26,10 +26,10 @@ class Globe
     @_globe_scale = 2 / 3
     @_diameter = (Math.min @_w, @_h) * @_globe_scale
     @_radius = @_diameter / 2
-    @_frame_rate = 10
+    @_frame_rate = 24
 
     @_background_projection = d3.geo.reverseNellHammer()
-      .scale(@_radius)
+      .scale(@_radius * .9)
       .translate([@_w / 2, @_h / 2])
       .precision(.1)
 
@@ -38,12 +38,21 @@ class Globe
       .translate([@_w / 2, @_h / 2])
       .scale(@_radius)
       .rotate([0, 0, 0])
+      
+    @_reverse_projection = d3.geo.reverseOrthographic()
+      .clipAngle(90)
+      .translate([@_w / 2, @_h / 2])
+      .scale(@_radius)
+      .rotate([-180, 0, 0])
 
     @_background_path = d3.geo.path()
       .projection(@_background_projection)
 
     @_path = d3.geo.path()
       .projection(@_projection)
+
+    @_reverse_path = d3.geo.path()
+      .projection(@_reverse_projection)
 
     @_svg = d3.select("#globe").append("svg")
       .attr("width", @_w)
@@ -66,7 +75,7 @@ class Globe
     land_fill.append("stop").attr("offset", "100%").attr("stop-color", "#46594b").attr('stop-opacity', "1.0")
 
     d3.json "/data/world.topojson", @displayCountries
-    d3.json "/data/ip_lat_lngs.json", @displayLocations
+    # d3.json "/data/ip_lat_lngs.json", @displayLocations
 
 
   ## Build feature set and populate globe
@@ -83,6 +92,11 @@ class Globe
       .attr("data-code", (d) -> d.id)
       .attr("d", @_background_path)
       .attr("class","country background")
+
+    @_reverse_country_elements = @_svg.append("path")
+      .datum(country_features)
+      .attr("d", @_reverse_path)
+      .attr("class","country back")
 
     @_sea = @_svg.append("circle")
       .attr("cx", @_w / 2)
@@ -108,12 +122,14 @@ class Globe
 
   spinStep: =>
     [lng, lat, roll] = @_projection.rotate()
-    lng = lng + 0.33
+    lng = lng + 0.5
     @_projection.rotate([lng ,lat,roll])
     @_background_projection.rotate([lng-180, -lat, -roll])
+    @_reverse_projection.rotate([lng-180, -lat, -roll])
     @_country_elements?.attr("d", @_path)
     @_background_country_elements?.attr("d", @_background_path)
-    @_locations?.attr("d", @_path)
+    @_reverse_country_elements.attr("d", @_reverse_path)
+    # @_locations?.attr("d", @_path)
 
 
 
