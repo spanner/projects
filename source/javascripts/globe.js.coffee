@@ -26,7 +26,7 @@ class Globe
     @_globe_scale = 2 / 3
     @_diameter = (Math.min @_w, @_h) * @_globe_scale
     @_radius = @_diameter / 2
-    @_frame_rate = 10
+    @_frame_rate = 24
 
     @_background_projection = d3.geo.reverseNellHammer()
       .scale(@_radius)
@@ -98,19 +98,25 @@ class Globe
 
     window.setInterval @spinStep, 1000 / @_frame_rate
 
-  displayLocations: (error, json) =>
-    
-    circles = json.map ({lat:lat,lng:lng}={}) ->
+  displayLocations: (error, points) =>
+    points = points.slice 0, 500
+    circles = points.map ({lat:lat,lng:lng}={}) ->
       d3.geo.circle().origin([lng,lat]).angle(1.0)()
 
     multi_circles =
       type: "MultiPolygon"
       coordinates: circles.map (poly) -> poly.coordinates
 
-    @_locations = @_svg.selectAll('path')
-      .data(circles)
+    @_locations = @_svg.append('path')
+      .datum(multi_circles)
       .attr("class","location")
       .attr("d", @_path)
+
+    # @_locations = @_svg.selectAll('path')
+    #   .data(circles)
+    #   .enter().insert("path")
+    #   .attr("class","location")
+    #   .attr("d", @_path)
 
   spinStep: =>
     [lng, lat, roll] = @_projection.rotate()
