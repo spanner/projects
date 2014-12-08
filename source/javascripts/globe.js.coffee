@@ -112,13 +112,25 @@ class Globe
 
     window.setInterval @spinStep, 1000 / @_frame_rate
 
-  displayLocations: (error, json) =>
-    circles = json.map ({lat:lat,lng:lng}={}) ->
+  displayLocations: (error, points) =>
+    points = points.slice 0, 500
+    circles = points.map ({lat:lat,lng:lng}={}) ->
       d3.geo.circle().origin([lng,lat]).angle(1.0)()
-    @_locations = @_g.append('path')
-      .datum(circles)
+
+    multi_circles =
+      type: "MultiPolygon"
+      coordinates: circles.map (poly) -> poly.coordinates
+
+    @_locations = @_svg.append('path')
+      .datum(multi_circles)
       .attr("class","location")
       .attr("d", @_path)
+
+    # @_locations = @_svg.selectAll('path')
+    #   .data(circles)
+    #   .enter().insert("path")
+    #   .attr("class","location")
+    #   .attr("d", @_path)
 
   spinStep: =>
     [lng, lat, roll] = @_projection.rotate()
@@ -130,8 +142,6 @@ class Globe
     @_background_country_elements?.attr("d", @_background_path)
     @_reverse_country_elements.attr("d", @_reverse_path)
     # @_locations?.attr("d", @_path)
-
-
 
 
 window.globe = new Globe()
