@@ -12,9 +12,10 @@ d3.geo.reverseOrthographic = () ->
     [Math.cos(φ) * Math.sin(λ), Math.sin(φ)]
 
 d3.geo.reverseNellHammer = () ->
+  ratio = 1.6
   d3.geo.projection (λ, φ)  ->
     λ *= -1
-    [λ * (1 + Math.cos(φ)) / 2, 2 * (φ - Math.tan(φ / 2))]
+    [λ * (1 + Math.cos(φ)) / ratio, 2 * (φ - Math.tan(φ / 2))]
 
 class Globe
   ## Prepare container 
@@ -22,11 +23,14 @@ class Globe
   constructor: () ->
     @_w = window.innerWidth
     @_h = window.innerHeight
+    @_s = 0.0025 #lats per second
+    @_l = 0 # start at meridian
 
     @_globe_scale = 2 / 3
     @_diameter = (Math.min @_w, @_h) * @_globe_scale
     @_radius = @_diameter / 2
     @_reporter = document.getElementById('report')
+    @_rates = []
 
     @_background_projection = d3.geo.reverseNellHammer()
       .scale(@_radius * .9)
@@ -110,9 +114,7 @@ class Globe
       .attr("class","country front")
       .style("fill", "url(#land_fill)")
 
-    @_s = 0.0025 #lats per second
     @_t = new Date().getTime()
-    @_l = 0
     @_spinner = @spin()
 
   displayLocations: (error, points) =>
@@ -134,8 +136,12 @@ class Globe
     now = new Date().getTime()
     delta = now - @_t
     @_l += delta * @_s
-    rate = Math.round(1000.0 / delta)# / 100.0
-    @_reporter.innerText = "#{rate}fps"
+    rate = 1000.0 / delta
+    if rate is rate isnt Infinity
+      @_rates.shift if @_rates.length > 99
+      @_rates.push rate
+      average = Math.round(@_rates.reduce((v, c) -> v + c) / @_rates.length)
+      @_reporter.innerText = "#{average}fps"
 
     @_projection.rotate([@_l, 0, 0])
     @_background_projection.rotate([@_l-180, 0, 0])
