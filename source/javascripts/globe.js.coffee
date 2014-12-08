@@ -26,7 +26,7 @@ class Globe
     @_globe_scale = 2 / 3
     @_diameter = (Math.min @_w, @_h) * @_globe_scale
     @_radius = @_diameter / 2
-    @_frame_rate = 24
+    @_reporter = document.getElementById('report')
 
     @_background_projection = d3.geo.reverseNellHammer()
       .scale(@_radius * .9)
@@ -110,7 +110,10 @@ class Globe
       .attr("class","country front")
       .style("fill", "url(#land_fill)")
 
-    window.setInterval @spinStep, 1000 / @_frame_rate
+    @_s = 0.0025 #lats per second
+    @_t = new Date().getTime()
+    @_l = 0
+    @_spinner = @spin()
 
   displayLocations: (error, points) =>
     points = points.slice 0, 500
@@ -126,14 +129,25 @@ class Globe
       .attr("class","location")
       .attr("d", @_path)
 
-    # @_locations = @_svg.selectAll('path')
-    #   .data(circles)
-    #   .enter().insert("path")
-    #   .attr("class","location")
-    #   .attr("d", @_path)
+  spin: () =>
+    requestAnimationFrame @spin
+    now = new Date().getTime()
+    delta = now - @_t
+    @_l += delta * @_s
+    rate = Math.round(1000.0 / delta)# / 100.0
+    @_reporter.innerText = "#{rate}fps"
 
-  spinStep: =>
-    [lng, lat, roll] = @_projection.rotate()
+    @_projection.rotate([@_l, 0, 0])
+    @_background_projection.rotate([@_l-180, 0, 0])
+    @_reverse_projection.rotate([@_l-180, 0, 0])
+    @_country_elements?.attr("d", @_path)
+    @_background_country_elements?.attr("d", @_background_path)
+    @_reverse_country_elements.attr("d", @_reverse_path)
+    # @_locations?.attr("d", @_path)
+    @_t = now
+
+    
+  spinStep: () =>
     lng = lng + 0.5
     @_projection.rotate([lng ,lat,roll])
     @_background_projection.rotate([lng-180, -lat, -roll])
